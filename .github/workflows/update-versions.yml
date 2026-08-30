@@ -1,0 +1,57 @@
+name: Update versions
+
+on:
+  schedule:
+    # Check for new ParadeDB / VectorChord releases every day at 03:17 UTC.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      paradedb_version:
+        description: "ParadeDB version (empty = latest GitHub release)"
+        required: false
+        type: string
+      vchord_version:
+        description: "VectorChord version (empty = latest GitHub release)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: update-versions
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Resolve and apply latest versions
+        id: versions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PARADEDB_VERSION_OVERRIDE: ${{ inputs.paradedb_version }}
+          VCHORD_VERSION_OVERRIDE: ${{ inputs.vchord_version }}
+        run: bash scripts/update-versions.sh
+
+      - name: Commit and push to main
+        if: steps.versions.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Dockerfile README.md
+          git commit -m "${{ steps.versions.outputs.summary }}"
+          git push origin HEAD:main
+
+      # GITHUB_TOKEN commits do not trigger other workflows; publish explicitly.
+      - name: Publish image
+        if: steps.versions.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run publish.yml --ref main
