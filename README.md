@@ -3,7 +3,7 @@
 基于官方 [ParadeDB](https://github.com/paradedb/paradedb) 镜像，额外安装 [VectorChord](https://github.com/supervc-stack/VectorChord)（`vchord`），并写入 `shared_preload_libraries`。一份 Postgres 镜像同时覆盖全文检索（`pg_search`）和向量检索（`vchord`）。
 
 <!-- VERSIONS:START -->
-- ParadeDB: `v0.25.6`
+- ParadeDB: `v0.25.7`
 - VectorChord: `1.1.1`
 - PostgreSQL: `18`
 <!-- VERSIONS:END -->
